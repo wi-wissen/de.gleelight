@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'lamp.dart';
 
-/// Datenmodell für eine Lampengruppe
+/// Data model for a lamp group
 class LampGroup {
   final String id;
   final String name;
@@ -19,18 +19,18 @@ class LampGroup {
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
-  /// Spezielle "All" Gruppe erstellen
+  /// Create special "All" group
   factory LampGroup.all(List<String> allLampIds) {
     return LampGroup(
       id: 'all',
       name: 'All',
       lampIds: allLampIds,
-      iconColor: const Color(0xFF4CAF50), // Grün für "All"
+      iconColor: const Color(0xFF4CAF50), // Green for "All"
       type: GroupType.all,
     );
   }
 
-  /// Einzellampen-Gruppe erstellen
+  /// Create single lamp group
   factory LampGroup.single(Lamp lamp) {
     return LampGroup(
       id: 'single_${lamp.id}',
@@ -41,7 +41,7 @@ class LampGroup {
     );
   }
 
-  /// Kopie mit geänderten Werten erstellen
+  /// Create a copy with changed values
   LampGroup copyWith({
     String? name,
     List<String>? lampIds,
@@ -57,24 +57,24 @@ class LampGroup {
     );
   }
 
-  /// Lampe zur Gruppe hinzufügen
+  /// Add lamp to group
   LampGroup addLamp(String lampId) {
     if (lampIds.contains(lampId)) return this;
     return copyWith(lampIds: [...lampIds, lampId]);
   }
 
-  /// Lampe aus Gruppe entfernen
+  /// Remove lamp from group
   LampGroup removeLamp(String lampId) {
     return copyWith(lampIds: lampIds.where((id) => id != lampId).toList());
   }
 
-  /// Prüft ob Gruppe Lampen enthält
+  /// Check if group contains lamps
   bool get isEmpty => lampIds.isEmpty;
 
-  /// Prüft ob es eine System-Gruppe ist (All oder Single)
+  /// Check if it's a system group (All or Single)
   bool get isSystemGroup => type == GroupType.all || type == GroupType.single;
 
-  /// JSON Serialisierung
+  /// JSON serialization
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -86,7 +86,7 @@ class LampGroup {
     };
   }
 
-  /// JSON Deserialisierung
+  /// JSON deserialization
   factory LampGroup.fromJson(Map<String, dynamic> json) {
     return LampGroup(
       id: json['id'],
@@ -105,24 +105,25 @@ class LampGroup {
 
   @override
   bool operator ==(Object other) =>
-    identical(this, other) ||
-    other is LampGroup && runtimeType == other.runtimeType && id == other.id;
+      identical(this, other) ||
+      other is LampGroup && runtimeType == other.runtimeType && id == other.id;
 
   @override
   int get hashCode => id.hashCode;
 
   @override
-  String toString() => 'LampGroup(id: $id, name: $name, lamps: ${lampIds.length})';
+  String toString() =>
+      'LampGroup(id: $id, name: $name, lamps: ${lampIds.length})';
 }
 
-/// Typ einer Lampengruppe
+/// Lamp group type
 enum GroupType {
-  all,     // "All" - enthält alle Lampen
-  single,  // Einzellampe als Gruppe
-  custom,  // Benutzerdefinierte Gruppe
+  all, // "All" - contains all lamps
+  single, // Single lamp as group
+  custom, // User-defined group
 }
 
-/// Status einer Gruppe basierend auf den enthaltenen Lampen
+/// Status of a group based on contained lamps
 class GroupStatus {
   final bool hasOnlineLamps;
   final bool hasOfflineLamps;
@@ -142,7 +143,7 @@ class GroupStatus {
     required this.totalCount,
   });
 
-  /// Erstellt GroupStatus basierend auf einer Liste von Lampen
+  /// Create GroupStatus based on a list of lamps
   factory GroupStatus.fromLamps(List<Lamp> lamps) {
     final onlineLamps = lamps.where((l) => !l.isOffline).toList();
     final onLamps = onlineLamps.where((l) => l.power).toList();
@@ -158,14 +159,14 @@ class GroupStatus {
     );
   }
 
-  /// Hauptstatus für UI-Darstellung
+  /// Primary status for UI display
   LampStatus get primaryStatus {
     if (!hasOnlineLamps) return LampStatus.offline;
     if (allOn) return LampStatus.on;
     if (allOff) return LampStatus.off;
-    return LampStatus.on; // Gemischter Status wird als "an" dargestellt
+    return LampStatus.on; // Mixed status displayed as "on"
   }
 
-  /// Zeigt ob der Status gemischt ist (einige an, einige aus)
+  /// Check if status is mixed (some on, some off)
   bool get isMixed => someOn;
 }

@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-/// Datenmodell für eine Yeelight-Lampe mit UI-spezifischen Eigenschaften
+/// Data model for a Yeelight lamp with UI-specific properties
 class Lamp {
   final String id;
   final String name;
@@ -11,12 +11,19 @@ class Lamp {
   final int? colorTemp;
   final int? rgb;
   final List<String> supportedMethods;
-  
-  // UI-spezifische Eigenschaften
+
+  // UI-specific properties
   final Color iconColor;
-  final bool isOnline;
   final DateTime lastSeen;
-  
+
+  /// Whether the control connection to the lamp is up.
+  ///
+  /// Starts out true for a lamp restored from storage: the lamp is almost
+  /// always still there, and assuming otherwise would grey out its button until
+  /// discovery has run. It is set to false only once a connection attempt has
+  /// actually failed.
+  final bool reachable;
+
   Lamp({
     required this.id,
     required this.name,
@@ -28,62 +35,62 @@ class Lamp {
     this.rgb,
     this.supportedMethods = const [],
     this.iconColor = const Color(0xFF2196F3), // Material Blue
-    this.isOnline = true,
+    this.reachable = true,
     DateTime? lastSeen,
   }) : lastSeen = lastSeen ?? DateTime.now();
 
-  /// Kopie mit geänderten Werten erstellen
+  /// Create a copy with changed values
   Lamp copyWith({
     String? name,
+    String? ip,
     bool? power,
     int? brightness,
     int? colorTemp,
     int? rgb,
+    List<String>? supportedMethods,
     Color? iconColor,
-    bool? isOnline,
+    bool? reachable,
     DateTime? lastSeen,
   }) {
     return Lamp(
       id: id,
       name: name ?? this.name,
       model: model,
-      ip: ip,
+      ip: ip ?? this.ip,
       power: power ?? this.power,
       brightness: brightness ?? this.brightness,
       colorTemp: colorTemp ?? this.colorTemp,
       rgb: rgb ?? this.rgb,
-      supportedMethods: supportedMethods,
+      supportedMethods: supportedMethods ?? this.supportedMethods,
       iconColor: iconColor ?? this.iconColor,
-      isOnline: isOnline ?? this.isOnline,
+      reachable: reachable ?? this.reachable,
       lastSeen: lastSeen ?? this.lastSeen,
     );
   }
 
-  /// Prüft ob Lampe als offline gilt (>2 Minuten nicht gesehen)
-  bool get isOffline {
-    return DateTime.now().difference(lastSeen).inMinutes > 2;
-  }
+  /// Check if the lamp cannot currently be controlled.
+  bool get isOffline => !reachable;
 
-  /// Aktueller Status für UI
+  /// Current status for UI
   LampStatus get status {
     if (isOffline) return LampStatus.offline;
     if (!power) return LampStatus.off;
     return LampStatus.on;
   }
 
-  /// Unterstützt Farbtemperatur-Steuerung
-  bool get supportsColorTemp => 
-    supportedMethods.contains('set_ct_abx') || 
-    model.contains('color') || 
-    model.contains('ceiling');
+  /// Supports color temperature control
+  bool get supportsColorTemp =>
+      supportedMethods.contains('set_ct_abx') ||
+      model.contains('color') ||
+      model.contains('ceiling');
 
-  /// Unterstützt RGB-Farben
-  bool get supportsRgb => 
-    supportedMethods.contains('set_rgb') || 
-    model.contains('color') || 
-    model.contains('stripe');
+  /// Supports RGB colors
+  bool get supportsRgb =>
+      supportedMethods.contains('set_rgb') ||
+      model.contains('color') ||
+      model.contains('stripe');
 
-  /// JSON Serialisierung
+  /// JSON serialization
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -96,12 +103,11 @@ class Lamp {
       'rgb': rgb,
       'supportedMethods': supportedMethods,
       'iconColor': iconColor.value,
-      'isOnline': isOnline,
       'lastSeen': lastSeen.millisecondsSinceEpoch,
     };
   }
 
-  /// JSON Deserialisierung
+  /// JSON deserialization
   factory Lamp.fromJson(Map<String, dynamic> json) {
     return Lamp(
       id: json['id'],
@@ -114,7 +120,6 @@ class Lamp {
       rgb: json['rgb'],
       supportedMethods: List<String>.from(json['supportedMethods'] ?? []),
       iconColor: Color(json['iconColor'] ?? 0xFF2196F3),
-      isOnline: json['isOnline'] ?? true,
       lastSeen: DateTime.fromMillisecondsSinceEpoch(
         json['lastSeen'] ?? DateTime.now().millisecondsSinceEpoch,
       ),
@@ -123,24 +128,25 @@ class Lamp {
 
   @override
   bool operator ==(Object other) =>
-    identical(this, other) ||
-    other is Lamp && runtimeType == other.runtimeType && id == other.id;
+      identical(this, other) ||
+      other is Lamp && runtimeType == other.runtimeType && id == other.id;
 
   @override
   int get hashCode => id.hashCode;
 
   @override
-  String toString() => 'Lamp(id: $id, name: $name, power: $power, online: $isOnline)';
+  String toString() =>
+      'Lamp(id: $id, name: $name, power: $power, isOffline: $isOffline)';
 }
 
-/// Status einer Lampe für UI-Darstellung
+/// Lamp status for UI display
 enum LampStatus {
-  on,     // An und online
-  off,    // Aus aber online
-  offline, // Nicht erreichbar
+  on, // On and online
+  off, // Off but online
+  offline, // Not reachable
 }
 
-/// Material Design Farbpalette für Lampen-Icons
+/// Material Design color palette for lamp icons
 class LampColors {
   static const List<Color> palette = [
     Color(0xFF2196F3), // Blue
@@ -157,12 +163,12 @@ class LampColors {
     Color(0xFF009688), // Teal
   ];
 
-  /// Gibt eine Farbe basierend auf dem Index zurück
+  /// Get a color based on index
   static Color getColor(int index) {
     return palette[index % palette.length];
   }
 
-  /// Findet den Index einer Farbe in der Palette
+  /// Find the index of a color in the palette
   static int getColorIndex(Color color) {
     return palette.indexOf(color);
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import '../models/lamp.dart';
 import '../models/group.dart';
 import '../models/scene.dart';
@@ -24,9 +25,10 @@ class ScenesScreen extends StatefulWidget {
 class _ScenesScreenState extends State<ScenesScreen> {
   final YeelightService _yeelightService = YeelightService();
   final StorageService _storage = StorageService.instance;
-  
+
   List<Scene> _scenes = [];
   bool _isApplying = false;
+  bool _hasChanges = false;
 
   @override
   void initState() {
@@ -35,208 +37,196 @@ class _ScenesScreenState extends State<ScenesScreen> {
     _addDefaultScenesIfEmpty();
   }
 
-  /// Standard-Szenen hinzufügen wenn noch keine existieren
-  void _addDefaultScenesIfEmpty() {
+  /// Add default scenes if none exist
+  void _addDefaultScenesIfEmpty() async {
     if (_scenes.isEmpty) {
+      final l10n = AppLocalizations.of(context);
       final defaultScenes = [
         Scene(
-          id: '${widget.group.id}_warm',
-          name: 'Warm',
-          groupId: widget.group.id,
+          id: 'warm_${DateTime.now().millisecondsSinceEpoch}',
+          name: l10n?.warm ?? 'Warm',
           settings: SceneSettings.warm,
           iconColor: const Color(0xFFFF9800),
         ),
         Scene(
-          id: '${widget.group.id}_bright',
-          name: 'Hell',
-          groupId: widget.group.id,
+          id: 'bright_${DateTime.now().millisecondsSinceEpoch + 1}',
+          name: l10n?.bright ?? 'Bright',
           settings: SceneSettings.bright,
           iconColor: const Color(0xFF2196F3),
         ),
         Scene(
-          id: '${widget.group.id}_dim',
-          name: 'Gedimmt',
-          groupId: widget.group.id,
+          id: 'dim_${DateTime.now().millisecondsSinceEpoch + 2}',
+          name: l10n?.dimmed ?? 'Dimmed',
           settings: SceneSettings.dim,
           iconColor: const Color(0xFF9C27B0),
         ),
       ];
-      
+
       setState(() {
         _scenes = defaultScenes;
+        _hasChanges = true;
       });
-      
-      // Standard-Szenen speichern
+
+      // Save default scenes
       for (final scene in defaultScenes) {
-        _storage.updateScene(scene);
+        await _storage.updateScene(scene);
       }
     }
   }
 
-  /// Szene anwenden
+  /// Apply scene
   Future<void> _applyScene(Scene scene) async {
     if (_isApplying) return;
-    
+
     setState(() => _isApplying = true);
-    
-    final onlineLamps = widget.lamps.where((l) => !l.isOffline).toList();
-    
-    for (final lamp in onlineLamps) {
-      // Lampe einschalten falls sie aus ist
-      if (!lamp.power) {
-        await _yeelightService.setPower(lamp.ip, true);
-      }
-      
-      // Helligkeit setzen
-      await _yeelightService.setBrightness(
-        lamp.ip, 
-        scene.settings.brightness,
-      );
-      
-      // Je nach Szenen-Typ weitere Einstellungen
-      switch (scene.settings.type) {
-        case SceneType.colorTemp:
-          if (scene.settings.colorTemp != null && lamp.supportsColorTemp) {
-            await _yeelightService.setColorTemp(
-              lamp.ip, 
-              scene.settings.colorTemp!,
-            );
-          }
-          break;
-        case SceneType.rgb:
-          if (scene.settings.rgb != null && lamp.supportsRgb) {
-            await _yeelightService.setRgb(
-              lamp.ip, 
-              scene.settings.rgb!,
-            );
-          }
-          break;
-        case SceneType.brightness:
-          // Nur Helligkeit, bereits gesetzt
-          break;
-      }
-    }
-    
-    setState(() => _isApplying = false);
-    
-    // Erfolgsmeldung
+
+    await Future.wait(
+        widget.lamps.map((lamp) => _applySceneToLamp(scene, lamp)));
+
+    if (mounted) setState(() => _isApplying = false);
+
+    // Success message
     if (mounted) {
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Szene "${scene.name}" angewendet'),
+          content: Text(l10n.sceneApplied(scene.name)),
           backgroundColor: Theme.of(context).colorScheme.primary,
         ),
       );
     }
   }
 
-  /// Neue Szene erstellen
-  Future<void> _createScene() async {
-    final result = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (context) => _CreateSceneDialog(
-        groupName: widget.group.name,
-        lamps: widget.lamps,
-      ),
-    );
-    
-    if (result != null) {
-      final scene = Scene(
-        id: '${widget.group.id}_${DateTime.now().millisecondsSinceEpoch}',
-        name: result['name'],
-        groupId: widget.group.id,
-        settings: result['settings'],
-        iconColor: result['color'],
-      );
-      
-      setState(() {
-        _scenes.add(scene);
-      });
-      
-      await _storage.updateScene(scene);
+  /// Apply a scene to one lamp.
+  ///
+  /// `set_scene` puts the lamp into the target state in a single command and is
+  /// accepted whether the lamp is on or off (spec 4.1), so an off lamp does not
+  /// need a separate set_power first.
+  Future<void> _applySceneToLamp(Scene scene, Lamp lamp) async {
+    final brightness = scene.settings.brightness.clamp(1, 100);
+
+    switch (scene.settings.type) {
+      case SceneType.colorTemp:
+        if (scene.settings.colorTemp != null && lamp.supportsColorTemp) {
+          await _yeelightService.setScene(
+            lamp.ip,
+            'ct',
+            [scene.settings.colorTemp!.clamp(1700, 6500), brightness],
+          );
+          return;
+        }
+        break;
+
+      case SceneType.rgb:
+        if (scene.settings.rgb != null && lamp.supportsRgb) {
+          await _yeelightService.setScene(
+            lamp.ip,
+            'color',
+            [scene.settings.rgb!.clamp(0, 16777215), brightness],
+          );
+          return;
+        }
+        break;
+
+      case SceneType.brightness:
+        break;
     }
+
+    // Brightness-only scene, or a lamp that does not support the scene's colour
+    // mode: turn it on at the requested brightness and leave the rest alone.
+    if (!lamp.power) {
+      await _yeelightService.setPower(lamp.ip, true);
+    }
+    await _yeelightService.setBrightness(lamp.ip, brightness);
   }
 
-  /// Szene löschen
+  /// Delete scene
   Future<void> _deleteScene(Scene scene) async {
+    final l10n = AppLocalizations.of(context)!;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Szene löschen'),
-        content: Text('Möchtest du die Szene "${scene.name}" wirklich löschen?'),
+        title: Text(l10n.deleteSceneTitle),
+        content: Text(l10n.deleteSceneConfirm(scene.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Abbrechen'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: TextButton.styleFrom(
               foregroundColor: Theme.of(context).colorScheme.error,
             ),
-            child: const Text('Löschen'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
     );
-    
+
     if (confirmed == true) {
       setState(() {
         _scenes.removeWhere((s) => s.id == scene.id);
+        _hasChanges = true;
       });
-      
+
       await _storage.deleteScene(scene.id);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final onlineLamps = widget.lamps.where((l) => !l.isOffline).toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${widget.group.name} - Szenen'),
-        actions: [
-          if (onlineLamps.isNotEmpty)
-            IconButton(
-              onPressed: _createScene,
-              icon: const Icon(Icons.add),
-              tooltip: 'Neue Szene',
-            ),
-        ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_hasChanges) {
+          Navigator.of(context).pop('scenes_changed');
+        } else {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.groupScenes(widget.group.name)),
+        ),
+        body: onlineLamps.isEmpty
+            ? const OfflineState()
+            : _scenes.isEmpty
+                ? const EmptyState()
+                : ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _scenes.length,
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final scene = _scenes[index];
+                      return SceneCard(
+                        scene: scene,
+                        isApplying: _isApplying,
+                        onApply: () => _applyScene(scene),
+                        onDelete: () => _deleteScene(scene),
+                      );
+                    },
+                  ),
       ),
-      
-      body: onlineLamps.isEmpty 
-        ? const _OfflineState()
-        : _scenes.isEmpty
-          ? const _EmptyState()
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: _scenes.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final scene = _scenes[index];
-                return _SceneCard(
-                  scene: scene,
-                  isApplying: _isApplying,
-                  onApply: () => _applyScene(scene),
-                  onDelete: () => _deleteScene(scene),
-                );
-              },
-            ),
     );
   }
 }
 
-/// Szenen-Karte
-class _SceneCard extends StatelessWidget {
+/// Scene card
+class SceneCard extends StatelessWidget {
   final Scene scene;
   final bool isApplying;
   final VoidCallback onApply;
   final VoidCallback onDelete;
 
-  const _SceneCard({
+  const SceneCard({
+    super.key,
     required this.scene,
     required this.isApplying,
     required this.onApply,
@@ -245,6 +235,7 @@ class _SceneCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
     return Card(
@@ -260,7 +251,7 @@ class _SceneCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: scene.iconColor.withOpacity(0.15),
+                  color: scene.iconColor.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -269,10 +260,10 @@ class _SceneCard extends StatelessWidget {
                   size: 24,
                 ),
               ),
-              
+
               const SizedBox(width: 16),
-              
-              // Name und Beschreibung
+
+              // Name and description
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -285,7 +276,7 @@ class _SceneCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      scene.settings.description,
+                      scene.settings.getLocalizedDescription(l10n),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -293,12 +284,12 @@ class _SceneCard extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Delete Button
               IconButton(
                 onPressed: isApplying ? null : onDelete,
                 icon: const Icon(Icons.delete_outline),
-                tooltip: 'Löschen',
+                tooltip: l10n.delete,
                 style: IconButton.styleFrom(
                   foregroundColor: theme.colorScheme.error,
                 ),
@@ -311,195 +302,54 @@ class _SceneCard extends StatelessWidget {
   }
 }
 
-/// Dialog zum Erstellen einer neuen Szene
-class _CreateSceneDialog extends StatefulWidget {
-  final String groupName;
-  final List<Lamp> lamps;
-
-  const _CreateSceneDialog({
-    required this.groupName,
-    required this.lamps,
-  });
-
-  @override
-  State<_CreateSceneDialog> createState() => _CreateSceneDialogState();
-}
-
-class _CreateSceneDialogState extends State<_CreateSceneDialog> {
-  final _nameController = TextEditingController();
-  double _brightness = 80;
-  double _colorTemp = 4000;
-  int _selectedColorIndex = 1; // Orange
-  
-  static const _colors = [
-    Color(0xFF2196F3), // Blue
-    Color(0xFFFF9800), // Orange  
-    Color(0xFF9C27B0), // Purple
-    Color(0xFF4CAF50), // Green
-    Color(0xFFF44336), // Red
-    Color(0xFF00BCD4), // Cyan
-  ];
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
-
-  void _save() {
-    final name = _nameController.text.trim();
-    if (name.isEmpty) return;
-    
-    final settings = SceneSettings.colorTemp(
-      brightness: _brightness.round(),
-      colorTemp: _colorTemp.round(),
-    );
-    
-    Navigator.of(context).pop({
-      'name': name,
-      'settings': settings,
-      'color': _colors[_selectedColorIndex],
-    });
-  }
+/// Offline state
+class OfflineState extends StatelessWidget {
+  const OfflineState({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final supportsColorTemp = widget.lamps.any((l) => l.supportsColorTemp);
+    final l10n = AppLocalizations.of(context)!;
 
-    return AlertDialog(
-      title: Text('Neue Szene für ${widget.groupName}'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Name
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Szenenname',
-                hintText: 'z.B. Abendlicht',
-              ),
-              autofocus: true,
-              textCapitalization: TextCapitalization.words,
-            ),
-            
-            const SizedBox(height: 24),
-            
-            // Helligkeit
-            Text('Helligkeit: ${_brightness.round()}%',
-                 style: theme.textTheme.titleSmall),
-            Slider(
-              value: _brightness,
-              min: 1,
-              max: 100,
-              divisions: 99,
-              onChanged: (value) => setState(() => _brightness = value),
-            ),
-            
-            if (supportsColorTemp) ...[
-              const SizedBox(height: 16),
-              
-              // Farbtemperatur
-              Text('Farbtemperatur: ${_colorTemp.round()}K',
-                   style: theme.textTheme.titleSmall),
-              Slider(
-                value: _colorTemp,
-                min: 1700,
-                max: 6500,
-                divisions: 48,
-                onChanged: (value) => setState(() => _colorTemp = value),
-              ),
-            ],
-            
-            const SizedBox(height: 16),
-            
-            // Farbe
-            Text('Szenenfarbe:', style: theme.textTheme.titleSmall),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: _colors.asMap().entries.map((entry) {
-                final index = entry.key;
-                final color = entry.value;
-                final isSelected = index == _selectedColorIndex;
-                
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedColorIndex = index),
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: isSelected
-                        ? Border.all(color: theme.colorScheme.primary, width: 3)
-                        : null,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Abbrechen'),
-        ),
-        TextButton(
-          onPressed: _save,
-          child: const Text('Erstellen'),
-        ),
-      ],
-    );
-  }
-}
-
-/// Offline-Zustand
-class _OfflineState extends StatelessWidget {
-  const _OfflineState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.wifi_off, size: 80, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('Keine Lampen online',
-               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
-          SizedBox(height: 8),
-          Text('Stelle sicher, dass deine Lampen\nerreichbar sind.',
-               textAlign: TextAlign.center,
-               style: TextStyle(color: Colors.grey)),
+          const Icon(Icons.wifi_off, size: 80, color: Colors.grey),
+          const SizedBox(height: 16),
+          Text(l10n.noLampsOnline,
+              style:
+                  const TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 8),
+          Text(l10n.ensureLampsReachable,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );
   }
 }
 
-/// Leerer Zustand
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+/// Empty state
+class EmptyState extends StatelessWidget {
+  const EmptyState({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final l10n = AppLocalizations.of(context)!;
+
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.palette_outlined, size: 80, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('Keine Szenen',
-               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
-          SizedBox(height: 8),
-          Text('Tippe auf + um deine erste\nSzene zu erstellen.',
-               textAlign: TextAlign.center,
-               style: TextStyle(color: Colors.grey)),
+          const Icon(Icons.palette_outlined, size: 80, color: Colors.grey),
+          const SizedBox(height: 16),
+          Text(l10n.noScenes,
+              style:
+                  const TextStyle(fontSize: 20, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 8),
+          Text(l10n.scenesAutoCreated,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.grey)),
         ],
       ),
     );

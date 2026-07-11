@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'services/storage_service.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Storage Service initialisieren
+
+  // Initialize storage service
   await StorageService.instance.init();
-  
-  // System UI konfigurieren
+
+  // Configure system UI
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
     ),
   );
-  
+
   runApp(const YeelightApp());
 }
 
@@ -27,7 +29,21 @@ class YeelightApp extends StatelessWidget {
     return MaterialApp(
       title: 'GleeLight',
       debugShowCheckedModeBanner: false,
-      
+
+      // Localization configuration
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('de'),
+        Locale('zh'),
+        Locale('es'),
+      ],
+
       // Theme konfiguration
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -50,7 +66,7 @@ class YeelightApp extends StatelessWidget {
           shape: CircleBorder(),
         ),
       ),
-      
+
       // Dark Theme
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -73,10 +89,10 @@ class YeelightApp extends StatelessWidget {
           shape: CircleBorder(),
         ),
       ),
-      
+
       // Automatische Theme-Erkennung basierend auf System
       themeMode: ThemeMode.system,
-      
+
       // Home Screen
       home: const HomeScreen(),
     );

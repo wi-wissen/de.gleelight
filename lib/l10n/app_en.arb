@@ -1,0 +1,137 @@
+{
+  "@@locale": "en",
+  "appTitle": "GleeLight",
+  "all": "All",
+  "on": "On",
+  "off": "Off",
+  "offline": "Offline",
+  "allOn": "All on ({count})",
+  "@allOn": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "allOff": "All off ({count})",
+  "@allOff": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "someOn": "{onCount} of {totalCount} on",
+  "@someOn": {
+    "placeholders": {
+      "onCount": {"type": "int"},
+      "totalCount": {"type": "int"}
+    }
+  },
+  "scenes": "Scenes",
+  "settings": "Settings",
+  "moreOptions": "More options",
+  "edit": "Edit",
+  "deleteLamp": "Delete lamp",
+  "deleteGroup": "Delete group",
+  "noLampsFound": "No lamps found",
+  "pullToRefresh": "Pull down to refresh",
+  "setupLanControl": "Make sure:\n\n1. Your Yeelight lamps are turned on\n2. LAN Control is enabled in the Yeelight app:\n   • Open Yeelight app\n   • Select your lamp\n   • Tap gear icon (Settings)\n   • Enable 'LAN Control'\n3. Your device is on the same WiFi network",
+  "noLampsOnline": "No lamps online",
+  "ensureLampsReachable": "Make sure your lamps\nare reachable.",
+  "noScenes": "No scenes",
+  "scenesAutoCreated": "Scenes are automatically created\nwhen you save settings.",
+  "newGroup": "New group",
+  "groupName": "Group name",
+  "groupNameHint": "e.g. Living room",
+  "selectLamps": "Select lamps:",
+  "noLampsOnlineShort": "No lamps online",
+  "cancel": "Cancel",
+  "create": "Create",
+  "save": "Save",
+  "delete": "Delete",
+  "editLamp": "Edit lamp",
+  "lampName": "Lamp name",
+  "lampNameHint": "e.g. Floor lamp",
+  "iconColor": "Icon color:",
+  "deleteSceneTitle": "Delete scene",
+  "deleteSceneConfirm": "Do you really want to delete the scene \"{name}\"?",
+  "@deleteSceneConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "deleteLampTitle": "Delete lamp",
+  "deleteLampConfirm": "Do you really want to delete the lamp \"{name}\"?",
+  "@deleteLampConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "deleteGroupTitle": "Delete group",
+  "deleteGroupConfirm": "Do you really want to delete the group \"{name}\"?",
+  "@deleteGroupConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "sceneApplied": "Scene \"{name}\" applied",
+  "@sceneApplied": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "sceneSaved": "Scene \"{name}\" saved",
+  "@sceneSaved": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "showScenes": "Show scenes",
+  "saveScene": "Save scene",
+  "sceneName": "Scene name",
+  "sceneNameHint": "e.g. Relaxation",
+  "lampsOnline": "{count, plural, =1{1 lamp online} other{{count} lamps online}}",
+  "@lampsOnline": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "brightness": "Brightness",
+  "colorTemperature": "Color temperature",
+  "warm": "Warm",
+  "neutral": "Neutral",
+  "cool": "Cool",
+  "saveAsScene": "Save as scene",
+  "bright": "Bright",
+  "dimmed": "Dimmed",
+  "brightnessPercent": "Brightness {value}%",
+  "@brightnessPercent": {
+    "placeholders": {
+      "value": {"type": "int"}
+    }
+  },
+  "brightnessAndColorTemp": "Brightness {brightness}%, {colorTemp}K",
+  "@brightnessAndColorTemp": {
+    "placeholders": {
+      "brightness": {"type": "int"},
+      "colorTemp": {"type": "int"}
+    }
+  },
+  "brightnessAndRgb": "Brightness {brightness}%, RGB #{rgb}",
+  "@brightnessAndRgb": {
+    "placeholders": {
+      "brightness": {"type": "int"},
+      "rgb": {"type": "String"}
+    }
+  },
+  "groupScenes": "{groupName} - Scenes",
+  "@groupScenes": {
+    "placeholders": {
+      "groupName": {"type": "String"}
+    }
+  },
+  "groupSettings": "{groupName} - Settings",
+  "@groupSettings": {
+    "placeholders": {
+      "groupName": {"type": "String"}
+    }
+  },
+  "ensureLampsOn": "Make sure your lamps\nare turned on and reachable."
+}

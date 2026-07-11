@@ -4,7 +4,7 @@ import '../models/lamp.dart';
 import '../models/group.dart';
 import '../models/scene.dart';
 
-/// Service für lokale Datenpersistierung
+/// Service for local data persistence
 class StorageService {
   static const String _keyLamps = 'lamps';
   static const String _keyGroups = 'groups';
@@ -17,21 +17,21 @@ class StorageService {
 
   SharedPreferences? _prefs;
 
-  /// Initialisierung
+  /// Initialization
   Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
   }
 
   SharedPreferences get prefs {
     if (_prefs == null) {
-      throw Exception('StorageService nicht initialisiert! Rufe init() auf.');
+      throw Exception('StorageService not initialized! Call init() first.');
     }
     return _prefs!;
   }
 
-  // === LAMPEN ===
+  // === LAMPS ===
 
-  /// Alle Lampen laden
+  /// Load all lamps
   Future<List<Lamp>> loadLamps() async {
     final json = prefs.getString(_keyLamps);
     if (json == null) return [];
@@ -40,36 +40,36 @@ class StorageService {
     return data.map((item) => Lamp.fromJson(item)).toList();
   }
 
-  /// Lampen speichern
+  /// Save lamps
   Future<void> saveLamps(List<Lamp> lamps) async {
     final data = lamps.map((lamp) => lamp.toJson()).toList();
     await prefs.setString(_keyLamps, jsonEncode(data));
   }
 
-  /// Einzelne Lampe aktualisieren
+  /// Update single lamp
   Future<void> updateLamp(Lamp lamp) async {
     final lamps = await loadLamps();
     final index = lamps.indexWhere((l) => l.id == lamp.id);
-    
+
     if (index >= 0) {
       lamps[index] = lamp;
     } else {
       lamps.add(lamp);
     }
-    
+
     await saveLamps(lamps);
   }
 
-  /// Lampe löschen
+  /// Delete lamp
   Future<void> deleteLamp(String lampId) async {
     final lamps = await loadLamps();
     lamps.removeWhere((l) => l.id == lampId);
     await saveLamps(lamps);
   }
 
-  // === GRUPPEN ===
+  // === GROUPS ===
 
-  /// Alle Gruppen laden
+  /// Load all groups
   Future<List<LampGroup>> loadGroups() async {
     final json = prefs.getString(_keyGroups);
     if (json == null) return [];
@@ -78,36 +78,36 @@ class StorageService {
     return data.map((item) => LampGroup.fromJson(item)).toList();
   }
 
-  /// Gruppen speichern
+  /// Save groups
   Future<void> saveGroups(List<LampGroup> groups) async {
     final data = groups.map((group) => group.toJson()).toList();
     await prefs.setString(_keyGroups, jsonEncode(data));
   }
 
-  /// Einzelne Gruppe aktualisieren
+  /// Update single group
   Future<void> updateGroup(LampGroup group) async {
     final groups = await loadGroups();
     final index = groups.indexWhere((g) => g.id == group.id);
-    
+
     if (index >= 0) {
       groups[index] = group;
     } else {
       groups.add(group);
     }
-    
+
     await saveGroups(groups);
   }
 
-  /// Gruppe löschen
+  /// Delete group
   Future<void> deleteGroup(String groupId) async {
     final groups = await loadGroups();
     groups.removeWhere((g) => g.id == groupId);
     await saveGroups(groups);
   }
 
-  // === SZENEN ===
+  // === SCENES (GLOBAL) ===
 
-  /// Alle Szenen laden
+  /// Load all scenes
   Future<List<Scene>> loadScenes() async {
     final json = prefs.getString(_keyScenes);
     if (json == null) return [];
@@ -116,96 +116,92 @@ class StorageService {
     return data.map((item) => Scene.fromJson(item)).toList();
   }
 
-  /// Szenen speichern
+  /// Save scenes
   Future<void> saveScenes(List<Scene> scenes) async {
     final data = scenes.map((scene) => scene.toJson()).toList();
     await prefs.setString(_keyScenes, jsonEncode(data));
   }
 
-  /// Szenen für eine Gruppe laden
-  Future<List<Scene>> loadScenesForGroup(String groupId) async {
-    final scenes = await loadScenes();
-    return scenes.where((s) => s.groupId == groupId).toList();
-  }
-
-  /// Einzelne Szene aktualisieren
+  /// Update single scene
   Future<void> updateScene(Scene scene) async {
     final scenes = await loadScenes();
     final index = scenes.indexWhere((s) => s.id == scene.id);
-    
+
     if (index >= 0) {
       scenes[index] = scene;
     } else {
       scenes.add(scene);
     }
-    
+
     await saveScenes(scenes);
   }
 
-  /// Szene löschen
+  /// Delete scene
   Future<void> deleteScene(String sceneId) async {
     final scenes = await loadScenes();
     scenes.removeWhere((s) => s.id == sceneId);
     await saveScenes(scenes);
   }
 
-  /// Szenen einer Gruppe löschen
-  Future<void> deleteScenesForGroup(String groupId) async {
+  /// Filter scenes applicable to a group
+  Future<List<Scene>> getScenesForGroup(List<Lamp> groupLamps) async {
     final scenes = await loadScenes();
-    scenes.removeWhere((s) => s.groupId == groupId);
-    await saveScenes(scenes);
+    return scenes
+        .where((scene) => scene.isApplicableToLamps(groupLamps))
+        .toList();
   }
 
-  // === LETZTE EINSTELLUNGEN ===
+  // === LAST SETTINGS ===
 
-  /// Letzte Einstellungen einer Gruppe speichern
-  Future<void> saveLastSettings(String groupId, Map<String, dynamic> settings) async {
+  /// Save last settings for a group
+  Future<void> saveLastSettings(
+      String groupId, Map<String, dynamic> settings) async {
     final allSettings = await _loadAllLastSettings();
     allSettings[groupId] = settings;
     await prefs.setString(_keyLastSettings, jsonEncode(allSettings));
   }
 
-  /// Letzte Einstellungen einer Gruppe laden
+  /// Load last settings for a group
   Future<Map<String, dynamic>?> loadLastSettings(String groupId) async {
     final allSettings = await _loadAllLastSettings();
     return allSettings[groupId];
   }
 
-  /// Alle letzten Einstellungen laden (privat)
+  /// Load all last settings (private)
   Future<Map<String, dynamic>> _loadAllLastSettings() async {
     final json = prefs.getString(_keyLastSettings);
     if (json == null) return {};
-    
+
     return Map<String, dynamic>.from(jsonDecode(json));
   }
 
-  // === HILFSMETHODEN ===
+  // === HELPER METHODS ===
 
-  /// System-Gruppen automatisch generieren
+  /// Automatically generate system groups
   Future<List<LampGroup>> generateSystemGroups(List<Lamp> lamps) async {
     final groups = <LampGroup>[];
-    
-    // "All" Gruppe
+
+    // "All" group
     if (lamps.isNotEmpty) {
       groups.add(LampGroup.all(lamps.map((l) => l.id).toList()));
     }
-    
-    // Einzellampen-Gruppen
+
+    // Single lamp groups
     for (final lamp in lamps) {
       groups.add(LampGroup.single(lamp));
     }
-    
+
     return groups;
   }
 
-  /// Verwaiste Daten bereinigen
+  /// Clean up orphaned data
   Future<void> cleanup() async {
     final lamps = await loadLamps();
     final groups = await loadGroups();
     final scenes = await loadScenes();
     final lampIds = lamps.map((l) => l.id).toSet();
-    
-    // Gruppen bereinigen (Lampen-IDs entfernen, die nicht mehr existieren)
+
+    // Clean up groups (remove lamp IDs that no longer exist)
     final cleanedGroups = <LampGroup>[];
     for (final group in groups) {
       final validLampIds = group.lampIds.where(lampIds.contains).toList();
@@ -213,17 +209,20 @@ class StorageService {
         cleanedGroups.add(group.copyWith(lampIds: validLampIds));
       }
     }
-    
-    // Szenen bereinigen (Szenen für nicht existierende Gruppen löschen)
-    final groupIds = cleanedGroups.map((g) => g.id).toSet();
-    final cleanedScenes = scenes.where((s) => groupIds.contains(s.groupId)).toList();
-    
-    // Bereinigten Daten speichern
+
+    // Clean up scenes - stay global, no group-specific cleanup needed
+    // Scenes are only deleted if explicitly no longer applicable
+    final cleanedScenes = scenes.where((scene) {
+      // Keep scenes applicable to at least one lamp
+      return scene.isApplicableToLamps(lamps);
+    }).toList();
+
+    // Save cleaned data
     await saveGroups(cleanedGroups);
     await saveScenes(cleanedScenes);
   }
 
-  /// Alle Daten löschen (für Reset/Debug)
+  /// Delete all data (for reset/debug)
   Future<void> clearAll() async {
     await prefs.remove(_keyLamps);
     await prefs.remove(_keyGroups);
@@ -231,13 +230,20 @@ class StorageService {
     await prefs.remove(_keyLastSettings);
   }
 
-  /// Debug: Alle gespeicherten Daten anzeigen
+  /// Debug: Print all stored data (development only)
   Future<void> debugPrint() async {
-    print('=== STORAGE DEBUG ===');
-    print('Lamps: ${await loadLamps()}');
-    print('Groups: ${await loadGroups()}');
-    print('Scenes: ${await loadScenes()}');
-    print('Last Settings: ${prefs.getString(_keyLastSettings)}');
-    print('====================');
+    // Debug output only in debug mode
+    assert(() {
+      final lampsFuture = loadLamps();
+      final groupsFuture = loadGroups();
+      final scenesFuture = loadScenes();
+      final lastSettings = prefs.getString(_keyLastSettings);
+
+      lampsFuture.then((lamps) => print('Lamps: $lamps'));
+      groupsFuture.then((groups) => print('Groups: $groups'));
+      scenesFuture.then((scenes) => print('Scenes: $scenes'));
+      print('Last Settings: $lastSettings');
+      return true;
+    }());
   }
 }

@@ -1,0 +1,137 @@
+{
+  "@@locale": "es",
+  "appTitle": "GleeLight",
+  "all": "Todas",
+  "on": "Encendida",
+  "off": "Apagada",
+  "offline": "Sin conexión",
+  "allOn": "Todas encendidas ({count})",
+  "@allOn": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "allOff": "Todas apagadas ({count})",
+  "@allOff": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "someOn": "{onCount} de {totalCount} encendidas",
+  "@someOn": {
+    "placeholders": {
+      "onCount": {"type": "int"},
+      "totalCount": {"type": "int"}
+    }
+  },
+  "scenes": "Escenas",
+  "settings": "Ajustes",
+  "moreOptions": "Más opciones",
+  "edit": "Editar",
+  "deleteLamp": "Eliminar lámpara",
+  "deleteGroup": "Eliminar grupo",
+  "noLampsFound": "No se encontraron lámparas",
+  "pullToRefresh": "Desliza hacia abajo para actualizar",
+  "setupLanControl": "Asegúrate de que:\n\n1. Tus lámparas Yeelight estén encendidas\n2. El control LAN esté activado en la app Yeelight:\n   • Abre la app Yeelight\n   • Selecciona tu lámpara\n   • Toca el ícono de engranaje (Ajustes)\n   • Activa 'Control LAN'\n3. Tu dispositivo esté en la misma red WiFi",
+  "noLampsOnline": "No hay lámparas en línea",
+  "ensureLampsReachable": "Asegúrate de que tus lámparas\nestén accesibles.",
+  "noScenes": "Sin escenas",
+  "scenesAutoCreated": "Las escenas se crean automáticamente\ncuando guardas los ajustes.",
+  "newGroup": "Nuevo grupo",
+  "groupName": "Nombre del grupo",
+  "groupNameHint": "ej. Sala de estar",
+  "selectLamps": "Seleccionar lámparas:",
+  "noLampsOnlineShort": "No hay lámparas en línea",
+  "cancel": "Cancelar",
+  "create": "Crear",
+  "save": "Guardar",
+  "delete": "Eliminar",
+  "editLamp": "Editar lámpara",
+  "lampName": "Nombre de la lámpara",
+  "lampNameHint": "ej. Lámpara de pie",
+  "iconColor": "Color del icono:",
+  "deleteSceneTitle": "Eliminar escena",
+  "deleteSceneConfirm": "¿Realmente deseas eliminar la escena \"{name}\"?",
+  "@deleteSceneConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "deleteLampTitle": "Eliminar lámpara",
+  "deleteLampConfirm": "¿Realmente deseas eliminar la lámpara \"{name}\"?",
+  "@deleteLampConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "deleteGroupTitle": "Eliminar grupo",
+  "deleteGroupConfirm": "¿Realmente deseas eliminar el grupo \"{name}\"?",
+  "@deleteGroupConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "sceneApplied": "Escena \"{name}\" aplicada",
+  "@sceneApplied": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "sceneSaved": "Escena \"{name}\" guardada",
+  "@sceneSaved": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "showScenes": "Mostrar escenas",
+  "saveScene": "Guardar escena",
+  "sceneName": "Nombre de la escena",
+  "sceneNameHint": "ej. Relajación",
+  "lampsOnline": "{count, plural, =1{1 lámpara en línea} other{{count} lámparas en línea}}",
+  "@lampsOnline": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "brightness": "Brillo",
+  "colorTemperature": "Temperatura de color",
+  "warm": "Cálido",
+  "neutral": "Neutro",
+  "cool": "Frío",
+  "saveAsScene": "Guardar como escena",
+  "bright": "Brillante",
+  "dimmed": "Atenuado",
+  "brightnessPercent": "Brillo {value}%",
+  "@brightnessPercent": {
+    "placeholders": {
+      "value": {"type": "int"}
+    }
+  },
+  "brightnessAndColorTemp": "Brillo {brightness}%, {colorTemp}K",
+  "@brightnessAndColorTemp": {
+    "placeholders": {
+      "brightness": {"type": "int"},
+      "colorTemp": {"type": "int"}
+    }
+  },
+  "brightnessAndRgb": "Brillo {brightness}%, RGB #{rgb}",
+  "@brightnessAndRgb": {
+    "placeholders": {
+      "brightness": {"type": "int"},
+      "rgb": {"type": "String"}
+    }
+  },
+  "groupScenes": "{groupName} - Escenas",
+  "@groupScenes": {
+    "placeholders": {
+      "groupName": {"type": "String"}
+    }
+  },
+  "groupSettings": "{groupName} - Ajustes",
+  "@groupSettings": {
+    "placeholders": {
+      "groupName": {"type": "String"}
+    }
+  },
+  "ensureLampsOn": "Asegúrate de que tus lámparas\nestén encendidas y accesibles."
+}

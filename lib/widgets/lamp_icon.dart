@@ -5,6 +5,7 @@ class LampIcon extends StatelessWidget {
   final Lamp lamp;
   final double size;
   final bool showLabel;
+  final bool isSmallIcon;
   final VoidCallback? onTap;
 
   const LampIcon({
@@ -12,15 +13,16 @@ class LampIcon extends StatelessWidget {
     required this.lamp,
     this.size = 48,
     this.showLabel = true,
+    this.isSmallIcon = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     Widget icon = _buildIcon(theme);
-    
+
     if (onTap != null) {
       icon = InkWell(
         onTap: onTap,
@@ -47,12 +49,10 @@ class LampIcon extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodySmall?.copyWith(
               fontSize: 10,
-              color: lamp.isOffline 
-                ? theme.disabledColor
-                : theme.colorScheme.onSurfaceVariant,
-              fontStyle: lamp.isOffline 
-                ? FontStyle.italic 
-                : FontStyle.normal,
+              color: lamp.isOffline
+                  ? theme.disabledColor
+                  : theme.colorScheme.onSurfaceVariant,
+              fontStyle: lamp.isOffline ? FontStyle.italic : FontStyle.normal,
             ),
           ),
         ),
@@ -62,8 +62,8 @@ class LampIcon extends StatelessWidget {
 
   Widget _buildIcon(ThemeData theme) {
     final colorScheme = theme.colorScheme;
-    
-    // Icon und Farbe basierend auf Status
+
+    // Icon and color based on status
     IconData iconData;
     Color iconColor;
     Color backgroundColor;
@@ -74,21 +74,27 @@ class LampIcon extends StatelessWidget {
         iconData = Icons.lightbulb;
         iconColor = colorScheme.onPrimary;
         backgroundColor = lamp.iconColor;
-        opacity = 1.0;
+
+        if (isSmallIcon) {
+          // Desaturated background color for small icons in groups
+          opacity = 0.4; // Much weaker background color
+        } else {
+          opacity = 1.0;
+        }
         break;
-        
+
       case LampStatus.off:
         iconData = Icons.lightbulb_outline;
         iconColor = colorScheme.onSurfaceVariant;
-        backgroundColor = colorScheme.surfaceVariant;
-        opacity = 0.7;
+        backgroundColor = colorScheme.surfaceContainerHighest;
+        opacity = isSmallIcon ? 0.3 : 0.7;
         break;
-        
+
       case LampStatus.offline:
         iconData = Icons.lightbulb_outline;
         iconColor = colorScheme.outline;
-        backgroundColor = colorScheme.surfaceVariant;
-        opacity = 0.3;
+        backgroundColor = colorScheme.surfaceContainerHighest;
+        opacity = isSmallIcon ? 0.15 : 0.3;
         break;
     }
 
@@ -96,14 +102,15 @@ class LampIcon extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: backgroundColor.withOpacity(opacity),
+        color: backgroundColor.withValues(alpha: opacity),
         shape: BoxShape.circle,
         border: lamp.status == LampStatus.offline
-          ? Border.all(
-              color: colorScheme.outline.withOpacity(0.3),
-              width: 1,
-            )
-          : null,
+            ? Border.all(
+                color: colorScheme.outline
+                    .withValues(alpha: isSmallIcon ? 0.2 : 0.3),
+                width: 1,
+              )
+            : null,
       ),
       child: Icon(
         iconData,

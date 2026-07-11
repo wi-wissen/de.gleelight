@@ -1,0 +1,137 @@
+{
+  "@@locale": "de",
+  "appTitle": "GleeLight",
+  "all": "Alle",
+  "on": "An",
+  "off": "Aus",
+  "offline": "Offline",
+  "allOn": "Alle an ({count})",
+  "@allOn": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "allOff": "Alle aus ({count})",
+  "@allOff": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "someOn": "{onCount} von {totalCount} an",
+  "@someOn": {
+    "placeholders": {
+      "onCount": {"type": "int"},
+      "totalCount": {"type": "int"}
+    }
+  },
+  "scenes": "Szenen",
+  "settings": "Einstellungen",
+  "moreOptions": "Weitere Optionen",
+  "edit": "Bearbeiten",
+  "deleteLamp": "Lampe löschen",
+  "deleteGroup": "Gruppe löschen",
+  "noLampsFound": "Keine Lampen gefunden",
+  "pullToRefresh": "Ziehe nach unten um zu aktualisieren",
+  "setupLanControl": "Stelle sicher:\n\n1. Deine Yeelight-Lampen sind eingeschaltet\n2. LAN-Steuerung ist in der Yeelight-App aktiviert:\n   • Öffne die Yeelight-App\n   • Wähle deine Lampe\n   • Tippe auf das Zahnrad (Einstellungen)\n   • Aktiviere 'LAN-Steuerung'\n3. Dein Gerät ist im selben WLAN-Netzwerk",
+  "noLampsOnline": "Keine Lampen online",
+  "ensureLampsReachable": "Stelle sicher, dass deine Lampen\nerreichbar sind.",
+  "noScenes": "Keine Szenen",
+  "scenesAutoCreated": "Szenen werden automatisch erstellt\nwenn du Einstellungen speicherst.",
+  "newGroup": "Neue Gruppe",
+  "groupName": "Gruppenname",
+  "groupNameHint": "z.B. Wohnzimmer",
+  "selectLamps": "Lampen auswählen:",
+  "noLampsOnlineShort": "Keine Lampen online",
+  "cancel": "Abbrechen",
+  "create": "Erstellen",
+  "save": "Speichern",
+  "delete": "Löschen",
+  "editLamp": "Lampe bearbeiten",
+  "lampName": "Lampenname",
+  "lampNameHint": "z.B. Stehlampe",
+  "iconColor": "Icon-Farbe:",
+  "deleteSceneTitle": "Szene löschen",
+  "deleteSceneConfirm": "Möchtest du die Szene \"{name}\" wirklich löschen?",
+  "@deleteSceneConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "deleteLampTitle": "Lampe löschen",
+  "deleteLampConfirm": "Möchtest du die Lampe \"{name}\" wirklich löschen?",
+  "@deleteLampConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "deleteGroupTitle": "Gruppe löschen",
+  "deleteGroupConfirm": "Möchtest du die Gruppe \"{name}\" wirklich löschen?",
+  "@deleteGroupConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "sceneApplied": "Szene \"{name}\" angewendet",
+  "@sceneApplied": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "sceneSaved": "Szene \"{name}\" wurde gespeichert",
+  "@sceneSaved": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "showScenes": "Szenen anzeigen",
+  "saveScene": "Szene speichern",
+  "sceneName": "Szenenname",
+  "sceneNameHint": "z.B. Entspannung",
+  "lampsOnline": "{count, plural, =1{1 Lampe online} other{{count} Lampen online}}",
+  "@lampsOnline": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "brightness": "Helligkeit",
+  "colorTemperature": "Farbtemperatur",
+  "warm": "Warm",
+  "neutral": "Neutral",
+  "cool": "Kühl",
+  "saveAsScene": "Als Szene speichern",
+  "bright": "Hell",
+  "dimmed": "Gedimmt",
+  "brightnessPercent": "Helligkeit {value}%",
+  "@brightnessPercent": {
+    "placeholders": {
+      "value": {"type": "int"}
+    }
+  },
+  "brightnessAndColorTemp": "Helligkeit {brightness}%, {colorTemp}K",
+  "@brightnessAndColorTemp": {
+    "placeholders": {
+      "brightness": {"type": "int"},
+      "colorTemp": {"type": "int"}
+    }
+  },
+  "brightnessAndRgb": "Helligkeit {brightness}%, RGB #{rgb}",
+  "@brightnessAndRgb": {
+    "placeholders": {
+      "brightness": {"type": "int"},
+      "rgb": {"type": "String"}
+    }
+  },
+  "groupScenes": "{groupName} - Szenen",
+  "@groupScenes": {
+    "placeholders": {
+      "groupName": {"type": "String"}
+    }
+  },
+  "groupSettings": "{groupName} - Einstellungen",
+  "@groupSettings": {
+    "placeholders": {
+      "groupName": {"type": "String"}
+    }
+  },
+  "ensureLampsOn": "Stelle sicher, dass deine Lampen\neingeschaltet und erreichbar sind."
+}

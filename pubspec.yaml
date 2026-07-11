@@ -1,7 +1,6 @@
 name: gleelight
-description: "GleeLight - Lokale Steuerung für Yeelight-Lampen ohne Cloud-Verbindung"
+description: A minimal Flutter app for local Yeelight control without cloud connection.
 publish_to: 'none'
-
 version: 1.0.0+1
 
 environment:
@@ -10,12 +9,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
-  # Für lokale Datenspeicherung
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   shared_preferences: ^2.2.2
-  
-  # Material Design Icons (bereits in Flutter enthalten)
-  cupertino_icons: ^1.0.2
 
 dev_dependencies:
   flutter_test:
@@ -24,7 +21,4 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-  # App Icon und Android-spezifische Konfiguration
-  # assets:
-  #   - images/
+  generate: true
