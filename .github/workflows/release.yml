@@ -114,6 +114,9 @@ jobs:
 
       - run: flutter pub get
 
+      - name: Toolchain diagnostics
+        run: flutter doctor -v
+
       - name: Build
         run: flutter build windows --release
 
