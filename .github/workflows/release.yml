@@ -70,24 +70,36 @@ jobs:
 
       - run: flutter pub get
 
-      - name: Build APK
-        run: flutter build apk --release
+      # One APK per architecture instead of one fat APK carrying all of them.
+      # A universal APK ships the Flutter engine three times (~45 MB of native
+      # libs) and a phone uses exactly one of them.
+      - name: Build APKs
+        run: flutter build apk --release --split-per-abi
 
-      - name: Verify it is signed with the release key
+      - name: Verify they are signed with the release key
         # A silent fallback to the debug key would produce an APK that cannot be
         # installed over an existing one. Fail loudly instead of shipping it.
         run: |
           APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)
-          "$APKSIGNER" verify --print-certs build/app/outputs/flutter-apk/app-release.apk | tee certs.txt
-          if grep -qi "CN=Android Debug" certs.txt; then
-            echo "::error::APK was signed with the debug key, not the release key."
-            exit 1
-          fi
+          for apk in build/app/outputs/flutter-apk/*-release.apk; do
+            echo "--- $apk"
+            "$APKSIGNER" verify --print-certs "$apk" | tee certs.txt
+            if grep -qi "CN=Android Debug" certs.txt; then
+              echo "::error::$apk was signed with the debug key, not the release key."
+              exit 1
+            fi
+          done
 
-      - name: Name the artifact
+      - name: Name the artifacts
+        # arm64 is what every phone since ~2016 runs. armeabi-v7a is kept for
+        # older 32-bit devices; x86_64 is emulator-only and not shipped.
         run: |
-          mv build/app/outputs/flutter-apk/app-release.apk \
-             gleelight-${{ needs.version.outputs.version }}-android-arm64.apk
+          V=${{ needs.version.outputs.version }}
+          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+             gleelight-$V-android-arm64.apk
+          mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
+             gleelight-$V-android-arm32.apk
+          ls -la gleelight-*.apk
 
       - uses: actions/upload-artifact@v7
         with:
@@ -200,7 +212,8 @@ jobs:
 
             | Platform | File | Notes |
             |---|---|---|
-            | Android | `gleelight-${{ needs.version.outputs.version }}-android-arm64.apk` | Signed, install directly on the device |
+            | Android | `gleelight-${{ needs.version.outputs.version }}-android-arm64.apk` | **Take this one.** Every phone since ~2016. |
+            | Android (32-bit) | `gleelight-${{ needs.version.outputs.version }}-android-arm32.apk` | Only for older 32-bit devices. |
             | Windows | `gleelight-${{ needs.version.outputs.version }}-windows-x64.zip` | Unzip and run `GleeLight.exe` |
             | iOS | `gleelight-${{ needs.version.outputs.version }}-ios-unsigned.zip` | **Unsigned build proof — not installable.** No Apple Developer account. |
 
