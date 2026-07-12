@@ -102,7 +102,13 @@ jobs:
   windows:
     name: Windows
     needs: version
-    runs-on: windows-latest
+    # NOT windows-latest: that image now ships Visual Studio 2026 (major 18).
+    # Flutter 3.35.1 only maps major 17 to a CMake generator and silently falls
+    # back to "Visual Studio 16 2019" for anything newer, so CMake then goes
+    # looking for a VS 2019 that is not there. flutter doctor still reports the
+    # toolchain as fine, which makes this fail in a confusing way.
+    # Pin to the image whose VS this Flutter version understands.
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v7
 
