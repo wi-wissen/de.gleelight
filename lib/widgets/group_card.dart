@@ -170,7 +170,8 @@ class GroupCard extends StatelessWidget {
                 Text(
                   lamps.first.ip,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                    color: theme.colorScheme.onSurfaceVariant
+                        .withValues(alpha: 0.7),
                     fontSize: 11,
                   ),
                 ),
@@ -264,7 +265,7 @@ class GroupCard extends StatelessWidget {
     switch (status.primaryStatus) {
       case LampStatus.on:
         iconColor = status.isMixed
-            ? colorScheme.primary.withOpacity(0.7)
+            ? colorScheme.primary.withValues(alpha: 0.7)
             : colorScheme.primary;
         iconData = Icons.lightbulb;
         break;
@@ -273,7 +274,7 @@ class GroupCard extends StatelessWidget {
         iconData = Icons.lightbulb_outline;
         break;
       case LampStatus.offline:
-        iconColor = colorScheme.outline.withOpacity(0.5);
+        iconColor = colorScheme.outline.withValues(alpha: 0.5);
         iconData = Icons.lightbulb_outline;
         break;
     }
@@ -283,8 +284,8 @@ class GroupCard extends StatelessWidget {
       height: 48,
       decoration: BoxDecoration(
         color: status.hasOnlineLamps
-            ? group.iconColor.withOpacity(0.2)
-            : Colors.grey.withOpacity(0.1),
+            ? group.iconColor.withValues(alpha: 0.2)
+            : Colors.grey.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
       child: Icon(

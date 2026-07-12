@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -145,7 +146,8 @@ class YeelightService {
     final result = await response;
     if (result == null) return false;
     if (result['error'] != null) {
-      print('⚠️ Lamp rejected command: ${result['error']}');
+      developer.log('Lamp rejected command: ${result['error']}',
+          name: 'yeelight');
       return false;
     }
     return result['result'] != null;
@@ -261,7 +263,7 @@ class YeelightService {
         );
       }
     } catch (e) {
-      print('❌ Discovery error: $e');
+      developer.log('Discovery error: $e', name: 'yeelight');
     }
   }
 
@@ -318,7 +320,7 @@ class YeelightService {
       });
       await collected.future;
     } catch (e) {
-      print('❌ Multicast search error: $e');
+      developer.log('Multicast search error: $e', name: 'yeelight');
     } finally {
       final s = socket;
       if (_disposed) {
@@ -355,7 +357,7 @@ class YeelightService {
         }
       }
     } catch (e) {
-      print('❌ Network interface error: $e');
+      developer.log('Network interface error: $e', name: 'yeelight');
     }
     return ranges;
   }
@@ -385,7 +387,7 @@ class YeelightService {
         }
       }
     } catch (e) {
-      print('❌ Network scan error: $e');
+      developer.log('Network scan error: $e', name: 'yeelight');
     }
   }
 
@@ -561,7 +563,7 @@ class YeelightService {
             : supportedMethods,
       );
     } catch (e) {
-      print('Parse error: $e');
+      developer.log('Discovery parse error: $e', name: 'yeelight');
       return null;
     }
   }

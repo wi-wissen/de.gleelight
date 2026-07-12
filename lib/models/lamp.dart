@@ -102,7 +102,7 @@ class Lamp {
       'colorTemp': colorTemp,
       'rgb': rgb,
       'supportedMethods': supportedMethods,
-      'iconColor': iconColor.value,
+      'iconColor': iconColor.toARGB32(),
       'lastSeen': lastSeen.millisecondsSinceEpoch,
     };
   }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/lamp.dart';
 import '../models/group.dart';
@@ -239,10 +240,13 @@ class StorageService {
       final scenesFuture = loadScenes();
       final lastSettings = prefs.getString(_keyLastSettings);
 
-      lampsFuture.then((lamps) => print('Lamps: $lamps'));
-      groupsFuture.then((groups) => print('Groups: $groups'));
-      scenesFuture.then((scenes) => print('Scenes: $scenes'));
-      print('Last Settings: $lastSettings');
+      lampsFuture
+          .then((lamps) => developer.log('Lamps: $lamps', name: 'storage'));
+      groupsFuture
+          .then((groups) => developer.log('Groups: $groups', name: 'storage'));
+      scenesFuture
+          .then((scenes) => developer.log('Scenes: $scenes', name: 'storage'));
+      developer.log('Last Settings: $lastSettings', name: 'storage');
       return true;
     }());
   }

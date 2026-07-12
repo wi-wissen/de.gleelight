@@ -1,3 +1,6 @@
+// This is a command line diagnostic tool: its printed output is the whole
+// point of it, so avoid_print does not apply here.
+// ignore_for_file: avoid_print
 // Ad-hoc probe against the real lamps on the LAN.
 // Read-only unless run with --toggle.
 //

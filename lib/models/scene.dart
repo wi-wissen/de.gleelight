@@ -101,7 +101,7 @@ class Scene {
       'id': id,
       'name': name,
       'settings': settings.toJson(),
-      'iconColor': iconColor.value,
+      'iconColor': iconColor.toARGB32(),
       'createdAt': createdAt.millisecondsSinceEpoch,
     };
   }

@@ -80,7 +80,7 @@ class LampGroup {
       'id': id,
       'name': name,
       'lampIds': lampIds,
-      'iconColor': iconColor.value,
+      'iconColor': iconColor.toARGB32(),
       'type': type.name,
       'createdAt': createdAt.millisecondsSinceEpoch,
     };
