@@ -306,6 +306,17 @@ base64-encoded), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_PASSWORD` and `ANDROI
 The release job fails loudly if the resulting APK turns out to be debug-signed, because such
 an APK cannot be installed over an existing GleeLight.
 
+## 🤖 Built with AI assistance
+
+Large parts of this project — including the networking layer, its tests, the CI workflows and
+this readme — were written with the help of an AI coding assistant (Anthropic's Claude), under
+human direction and review.
+
+The behaviour was not taken on trust: the control protocol is verified both against a fake
+lamp in the test suite and against real Yeelight hardware on a live network. Still, treat the
+code the way you would treat any code you did not write yourself — read it before you rely on
+it, and please report anything that looks wrong.
+
 ## 📄 License
 
 The **code** is under the MIT License — see [LICENSE](LICENSE).

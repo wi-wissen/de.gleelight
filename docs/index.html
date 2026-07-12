@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GleeLight — Local Yeelight control, no cloud</title>
+<meta name="description" content="A minimal, open-source app that controls your Yeelight lamps entirely over your own network. No cloud account, no telemetry.">
+
+<meta property="og:title" content="GleeLight">
+<meta property="og:description" content="Control your Yeelight lamps over your own network. No cloud, no account, no telemetry.">
+<meta property="og:url" content="https://gleelight.de">
+<meta property="og:type" content="website">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23FFC107'/><circle cx='50' cy='42' r='20' fill='white'/><rect x='40' y='62' width='20' height='6' rx='3' fill='white'/><rect x='44' y='72' width='12' height='5' rx='2.5' fill='white'/></svg>">
+
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f5f6fa;
+    --card: #ffffff;
+    --text: #14161c;
+    --muted: #5b6070;
+    --border: #e3e5ec;
+    --brand: #ffc107;
+    --brand-ink: #1b1400;
+    --accent: #2196f3;
+    --shadow: 0 1px 2px rgba(16,18,26,.06), 0 8px 24px rgba(16,18,26,.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1116;
+      --bg-soft: #151821;
+      --card: #171a23;
+      --text: #eceef4;
+      --muted: #9aa1b4;
+      --border: #262a36;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.35);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- header ---------- */
+  header {
+    padding: 28px 0;
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -.01em;
+    text-decoration: none;
+  }
+  .brand svg { width: 34px; height: 34px; display: block; }
+  .bar nav {
+    display: flex;
+    gap: 22px;
+    font-size: 15px;
+    color: var(--muted);
+  }
+  .bar nav a { text-decoration: none; }
+  .bar nav a:hover { color: var(--text); }
+  @media (max-width: 620px) { .bar nav { display: none; } }
+
+  /* ---------- hero ---------- */
+  .hero {
+    padding: 56px 0 40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    align-items: center;
+  }
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; gap: 40px; padding-top: 32px; }
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg-soft);
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 22px;
+  }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #22c55e;
+  }
+
+  h1 {
+    margin: 0 0 18px;
+    font-size: clamp(36px, 5.2vw, 54px);
+    line-height: 1.08;
+    letter-spacing: -.03em;
+    font-weight: 800;
+  }
+  h1 .glow { color: var(--brand); }
+
+  .lede {
+    margin: 0 0 32px;
+    font-size: 19px;
+    color: var(--muted);
+    max-width: 34ch;
+  }
+
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 13px 22px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    border: 1px solid transparent;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn svg { width: 18px; height: 18px; }
+
+  .btn-primary {
+    background: var(--brand);
+    color: var(--brand-ink);
+    box-shadow: var(--shadow);
+  }
+  .btn-ghost {
+    background: var(--card);
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .shot {
+    margin: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    background: var(--bg-soft);
+  }
+  .shot img { display: block; width: 100%; height: auto; }
+
+  /* ---------- features ---------- */
+  section { padding: 64px 0; }
+  h2 {
+    margin: 0 0 8px;
+    font-size: 30px;
+    letter-spacing: -.02em;
+    font-weight: 750;
+  }
+  .sub { margin: 0 0 36px; color: var(--muted); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 18px;
+  }
+  .feat {
+    padding: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .feat h3 {
+    margin: 14px 0 6px;
+    font-size: 17px;
+    font-weight: 650;
+  }
+  .feat p { margin: 0; color: var(--muted); font-size: 15px; }
+  .ico {
+    width: 38px; height: 38px;
+    display: grid; place-items: center;
+    border-radius: 10px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+  }
+  .ico svg { width: 20px; height: 20px; stroke: var(--accent); fill: none; stroke-width: 1.8; }
+
+  /* ---------- download ---------- */
+  .downloads { background: var(--bg-soft); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .dl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .dl {
+    display: block;
+    padding: 22px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    text-decoration: none;
+    transition: transform .12s ease, border-color .12s ease;
+  }
+  .dl:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .dl.disabled { opacity: .55; pointer-events: none; }
+  .dl strong { display: block; font-size: 17px; margin-bottom: 3px; }
+  .dl span { color: var(--muted); font-size: 14px; }
+
+  .note {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  /* ---------- setup ---------- */
+  ol.steps { margin: 0; padding-left: 20px; color: var(--muted); }
+  ol.steps li { margin-bottom: 10px; }
+  ol.steps strong { color: var(--text); font-weight: 600; }
+  code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: .9em;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 1px 6px;
+  }
+
+  /* ---------- footer ---------- */
+  footer {
+    padding: 44px 0;
+    color: var(--muted);
+    font-size: 14px;
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--muted); }
+  .foot-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+  }
+  .fine { max-width: 65ch; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="bar">
+      <a class="brand" href="/">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="48" fill="#FFC107"/>
+          <circle cx="50" cy="42" r="20" fill="#fff"/>
+          <rect x="40" y="62" width="20" height="6" rx="3" fill="#fff"/>
+          <rect x="44" y="72" width="12" height="5" rx="2.5" fill="#fff"/>
+        </svg>
+        GleeLight
+      </a>
+      <nav>
+        <a href="#features">Features</a>
+        <a href="#download">Download</a>
+        <a href="#setup">Setup</a>
+        <a href="https://github.com/wi-wissen/de.gleelight">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div>
+      <div class="pill"><span class="dot"></span> Runs entirely on your network</div>
+      <h1>Your lamps.<br>Your network.<br><span class="glow">No cloud.</span></h1>
+      <p class="lede">
+        A small, open-source app that talks to your Yeelight lamps directly — no account,
+        no cloud server, no telemetry. Press the button, the light responds.
+      </p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/wi-wissen/de.gleelight">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.56-.29-5.25-1.28-5.25-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.12 3.05.74.81 1.18 1.84 1.18 3.1 0 4.43-2.69 5.4-5.26 5.69.41.36.78 1.07.78 2.16v3.2c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg>
+          Source
+        </a>
+      </div>
+    </div>
+
+    <figure class="shot">
+      <img src="screenshot-windows.png" width="878" height="936"
+           alt="GleeLight showing an 'All' group, a 'Wohnzimmer' group, and two individual ceiling lamps with their IP addresses.">
+    </figure>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <h2>What it does</h2>
+    <p class="sub">Built on Yeelight's official LAN protocol — the one the lamps already speak.</p>
+
+    <div class="grid">
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.7" y2="16.7"/></svg></div>
+        <h3>Finds your lamps</h3>
+        <p>Sends one multicast search and the lamps answer. No manual IP entry, no pairing dance.</p>
+      </div>
+
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+        <h3>Reacts instantly</h3>
+        <p>A control connection stays open to every lamp, so a press is one write on a warm socket — not a fresh handshake.</p>
+      </div>
+
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+        <h3>Groups</h3>
+        <p>Every lamp on its own, all of them at once, or your own rooms. Switch a whole group with one tap.</p>
+      </div>
+
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="8.5" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="15.5" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="15.5" r="1.2" fill="currentColor" stroke="none"/></svg></div>
+        <h3>Scenes</h3>
+        <p>Warm, bright, dimmed — or save your own brightness and colour temperature and recall it later.</p>
+      </div>
+
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <h3>Nothing leaves the house</h3>
+        <p>No account, no cloud server, no analytics. The app speaks only to the lamps, on your own LAN.</p>
+      </div>
+
+      <div class="feat">
+        <div class="ico"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div>
+        <h3>Open source</h3>
+        <p>MIT licensed. Read it, build it, change it. Roughly 2,000 lines of Dart — small enough to actually understand.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="downloads" id="download">
+  <div class="wrap">
+    <h2>Download</h2>
+    <p class="sub">Grab the latest build from the releases page.</p>
+
+    <div class="dl-grid">
+      <a class="dl" href="https://github.com/wi-wissen/de.gleelight/releases/latest">
+        <strong>Android</strong>
+        <span>Signed APK — install and go</span>
+      </a>
+      <a class="dl" href="https://github.com/wi-wissen/de.gleelight/releases/latest">
+        <strong>Windows</strong>
+        <span>Portable ZIP, x64</span>
+      </a>
+      <span class="dl disabled">
+        <strong>iOS</strong>
+        <span>Not available — needs an Apple Developer account</span>
+      </span>
+    </div>
+
+    <p class="note">
+      Or build it yourself: <code>flutter build apk --release</code>. The full instructions are
+      in the <a href="https://github.com/wi-wissen/de.gleelight#readme">readme</a>.
+    </p>
+  </div>
+</section>
+
+<section id="setup">
+  <div class="wrap">
+    <h2>Before it works</h2>
+    <p class="sub">One switch has to be flipped, and it is not in this app.</p>
+    <ol class="steps">
+      <li>Open the <strong>official Yeelight app</strong> and set your lamps up there once, so they are on your Wi-Fi.</li>
+      <li>For each lamp, turn on <strong>"LAN Control"</strong> in its settings. Without it the lamp refuses every local connection — this is the single most common reason GleeLight finds nothing.</li>
+      <li>Make sure your phone or PC is on the <strong>same network</strong> as the lamps. Guest Wi-Fi and client isolation will block it.</li>
+      <li>Start GleeLight. It searches on its own.</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-row">
+      <a class="brand" href="/">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <circle cx="50" cy="50" r="48" fill="#FFC107"/>
+          <circle cx="50" cy="42" r="20" fill="#fff"/>
+          <rect x="40" y="62" width="20" height="6" rx="3" fill="#fff"/>
+          <rect x="44" y="72" width="12" height="5" rx="2.5" fill="#fff"/>
+        </svg>
+        GleeLight
+      </a>
+      <div>
+        <a href="https://github.com/wi-wissen/de.gleelight">GitHub</a> ·
+        <a href="https://github.com/wi-wissen/de.gleelight/releases">Releases</a> ·
+        <a href="https://github.com/wi-wissen/de.gleelight/blob/main/LICENSE">MIT License</a> ·
+        <a href="https://github.com/wi-wissen/de.gleelight/blob/main/TRADEMARKS.md">Trademarks</a> ·
+        <a href="https://wi-wissen.de/impressum.html">Legal notice</a> ·
+        <a href="https://wi-wissen.de/datenschutz.html">Privacy</a>
+      </div>
+    </div>
+    <p class="fine">
+      The code is MIT licensed; the name "GleeLight" and the logo are not — see
+      <a href="https://github.com/wi-wissen/de.gleelight/blob/main/TRADEMARKS.md">TRADEMARKS.md</a>.
+      Yeelight is a trademark of Qingdao Yeelink Information Technology Co., Ltd. GleeLight is an
+      independent, unofficial project and is not affiliated with or endorsed by Yeelight.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
