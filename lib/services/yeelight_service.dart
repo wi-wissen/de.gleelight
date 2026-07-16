@@ -665,6 +665,11 @@ class _LampConnection {
       _startKeepAlive();
       _setReachable(true);
       completer.complete(socket);
+
+      // Read the state right away instead of waiting for the first keepalive:
+      // from the moment a connection is up, it is the source of truth for the
+      // lamp's state, so it must not start out 20 s stale.
+      verify();
     }).catchError((error) {
       completer.completeError(error);
       _scheduleReconnect();

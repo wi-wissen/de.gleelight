@@ -185,6 +185,21 @@ void main() {
     expect(update.brightness, 30);
   });
 
+  test('reads the lamp state as soon as the connection opens', () async {
+    // The connection is the source of truth for lamp state while it is up, so
+    // it must not start out stale: waiting for the first keepalive (20 s)
+    // would let an outdated discovery answer or stored state stand long
+    // enough for the user to toggle against it.
+    final updates = <LampStateUpdate>[];
+    final subscription = service.stateStream.listen(updates.add);
+    addTearDown(subscription.cancel);
+
+    service.warmUp([lamp.ip]);
+
+    await waitFor(() => updates.any((u) => u.power == true));
+    expect(lamp.received.any((r) => r['method'] == 'get_prop'), isTrue);
+  });
+
   test('reconnects on its own after the lamp drops the connection', () async {
     await service.setPower(lamp.ip, true);
     expect(lamp.connectionCount, 1);

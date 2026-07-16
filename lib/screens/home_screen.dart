@@ -177,13 +177,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (existingIndex >= 0) {
       // Update existing lamp - keep custom name and icon color!
       final oldLamp = _lamps[existingIndex];
+
+      // A discovery response carries the state from whenever the lamp answered
+      // the search, which can be seconds in the past. While the control
+      // connection is up, fresher state has already arrived over the socket
+      // (results, notifications, keepalive), and a late response must not
+      // overwrite it - it would flip a lamp back to "off" right after a group
+      // press turned it on, making the next group press compute "on" again.
+      final hasLiveState = _yeelightService.isConnected(device.ip);
       lamp = oldLamp.copyWith(
         // name bleibt unverändert (benutzerdefinierter Name)
         ip: device.ip,
-        power: device.power,
-        brightness: device.brightness,
-        colorTemp: device.colorTemp,
-        rgb: device.rgb,
+        power: hasLiveState ? null : device.power,
+        brightness: hasLiveState ? null : device.brightness,
+        colorTemp: hasLiveState ? null : device.colorTemp,
+        rgb: hasLiveState ? null : device.rgb,
         supportedMethods:
             device.supportedMethods.isEmpty ? null : device.supportedMethods,
         reachable: true,
@@ -315,7 +323,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       if (index < 0) continue;
 
       if (results[i]) {
-        _lamps[index] = _lamps[index].copyWith(lastSeen: DateTime.now());
+        // The lamp confirmed the command, so its state IS the target - assert
+        // it again in case a stale read (discovery, in-flight get_prop) landed
+        // between the optimistic flip and this reconcile.
+        _lamps[index] = _lamps[index].copyWith(
+          power: targetPower,
+          lastSeen: DateTime.now(),
+        );
         await _storage.updateLamp(_lamps[index]);
       } else {
         _lamps[index] = _lamps[index].copyWith(
