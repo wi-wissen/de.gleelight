@@ -63,6 +63,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pullToRefresh => '下拉刷新';
 
   @override
+  String get setup => '设置';
+
+  @override
   String get setupLanControl =>
       '请确保：\n\n1. 您的 Yeelight 灯具已开启\n2. 在 Yeelight 应用中启用局域网控制：\n   • 打开 Yeelight 应用\n   • 选择您的灯具\n   • 点击齿轮图标（设置）\n   • 启用局域网控制\n3. 您的设备连接到相同的 WiFi 网络';
 

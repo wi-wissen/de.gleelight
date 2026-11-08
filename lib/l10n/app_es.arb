@@ -32,6 +32,7 @@
   "deleteGroup": "Eliminar grupo",
   "noLampsFound": "No se encontraron lámparas",
   "pullToRefresh": "Desliza hacia abajo para actualizar",
+  "setup": "Configuración",
   "setupLanControl": "Asegúrate de que:\n\n1. Tus lámparas Yeelight estén encendidas\n2. El control LAN esté activado en la app Yeelight:\n   • Abre la app Yeelight\n   • Selecciona tu lámpara\n   • Toca el ícono de engranaje (Ajustes)\n   • Activa 'Control LAN'\n3. Tu dispositivo esté en la misma red WiFi",
   "noLampsOnline": "No hay lámparas en línea",
   "ensureLampsReachable": "Asegúrate de que tus lámparas\nestén accesibles.",

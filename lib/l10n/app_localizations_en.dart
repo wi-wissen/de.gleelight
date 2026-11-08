@@ -63,6 +63,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pullToRefresh => 'Pull down to refresh';
 
   @override
+  String get setup => 'Setup';
+
+  @override
   String get setupLanControl =>
       'Make sure:\n\n1. Your Yeelight lamps are turned on\n2. LAN Control is enabled in the Yeelight app:\n   • Open Yeelight app\n   • Select your lamp\n   • Tap gear icon (Settings)\n   • Enable \'LAN Control\'\n3. Your device is on the same WiFi network';
 

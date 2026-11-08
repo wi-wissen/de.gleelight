@@ -19,14 +19,33 @@ jobs:
     outputs:
       version: ${{ steps.resolve.outputs.version }}
     steps:
+      - uses: actions/checkout@v7
+
       - id: resolve
         # Tag v1.2.3 -> 1.2.3. Manual runs take the version from the input.
+        # The input goes through env, not ${{ }} inside the script, so its text
+        # can never be run as shell code.
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "version=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT"
+          if [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
           else
-            echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            VERSION="${GITHUB_REF_NAME#v}"
           fi
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::'$VERSION' is not a version like 1.2.3"
+            exit 1
+          fi
+          # The APKs take their version from pubspec.yaml, not from the tag.
+          # A mismatch would publish "1.0.3" files that report themselves as
+          # 1.0.2 and do not install over the real 1.0.2.
+          PUBSPEC=$(sed -n 's/^version: *\([0-9.]*\).*/\1/p' pubspec.yaml)
+          if [ "$VERSION" != "$PUBSPEC" ]; then
+            echo "::error::Release $VERSION does not match pubspec.yaml version $PUBSPEC. Bump pubspec.yaml first."
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
   android:
     name: Android (signed APK)

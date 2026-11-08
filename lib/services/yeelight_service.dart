@@ -160,6 +160,14 @@ class YeelightService {
         sendCommand(ip, 'set_power', [on ? 'on' : 'off', effect, duration]));
   }
 
+  /// Flip the lamp's power, whatever state it is really in (spec 4.1).
+  ///
+  /// Unlike [setPower] this does not depend on the app knowing the current
+  /// state, so it does the right thing even right after app start, before the
+  /// first state read has come back. The lamp announces the resulting state in
+  /// a NOTIFICATION.
+  Future<bool> toggle(String ip) => _ok(sendCommand(ip, 'toggle', const []));
+
   /// Set brightness (1-100).
   ///
   /// `set_bright` is only accepted while the lamp is on (spec 4.1), so an off
