@@ -3,8 +3,8 @@
 A minimalistic Flutter app for local Yeelight lamp control **without cloud connection**. Based on the official Yeelight WiFi Light Inter-Operation Specification.
 
 [![CI](https://github.com/wi-wissen/de.gleelight/actions/workflows/ci.yml/badge.svg)](https://github.com/wi-wissen/de.gleelight/actions/workflows/ci.yml)
-![Flutter](https://img.shields.io/badge/Flutter-3.0+-blue.svg)
-![Dart](https://img.shields.io/badge/Dart-3.0+-blue.svg)
+![Flutter](https://img.shields.io/badge/Flutter-3.27+-blue.svg)
+![Dart](https://img.shields.io/badge/Dart-3.6+-blue.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
 > **GleeLight** - Bring joy to your lighting! 😊

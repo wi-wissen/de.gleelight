@@ -198,6 +198,12 @@ abstract class AppLocalizations {
   /// **'Pull down to refresh'**
   String get pullToRefresh;
 
+  /// No description provided for @setup.
+  ///
+  /// In en, this message translates to:
+  /// **'Setup'**
+  String get setup;
+
   /// No description provided for @setupLanControl.
   ///
   /// In en, this message translates to:

@@ -151,6 +151,15 @@ void main() {
     expect(command['id'], isA<int>());
   });
 
+  test('toggle sends the state-independent toggle command', () async {
+    // The app may still show stored state right after start; toggle must not
+    // carry a target the app derived from it.
+    expect(await service.toggle(lamp.ip), isTrue);
+
+    final command = lamp.received.firstWhere((r) => r['method'] == 'toggle');
+    expect(command['params'], isEmpty);
+  });
+
   test('matches a RESULT to its request even when a notification arrives first',
       () async {
     lamp.notifyBeforeResult = true;

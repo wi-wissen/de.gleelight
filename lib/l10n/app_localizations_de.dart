@@ -63,6 +63,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get pullToRefresh => 'Ziehe nach unten um zu aktualisieren';
 
   @override
+  String get setup => 'Einrichtung';
+
+  @override
   String get setupLanControl =>
       'Stelle sicher:\n\n1. Deine Yeelight-Lampen sind eingeschaltet\n2. LAN-Steuerung ist in der Yeelight-App aktiviert:\n   • Öffne die Yeelight-App\n   • Wähle deine Lampe\n   • Tippe auf das Zahnrad (Einstellungen)\n   • Aktiviere \'LAN-Steuerung\'\n3. Dein Gerät ist im selben WLAN-Netzwerk';
 

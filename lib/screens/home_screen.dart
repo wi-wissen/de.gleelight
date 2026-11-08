@@ -72,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final groups = await _storage.loadGroups();
     final scenes = await _storage.loadScenes();
 
+    if (!mounted) return;
     setState(() {
       _lamps = lamps;
       _groups = groups;
@@ -111,15 +112,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
 
     _lamps[index] = lamp;
-    _storage.updateLamp(lamp);
 
+    // The keepalive reads every lamp every 20 s; only touch storage and the UI
+    // when the lamp actually reports something new.
     if (old.power != lamp.power ||
         old.brightness != lamp.brightness ||
         old.colorTemp != lamp.colorTemp ||
         old.rgb != lamp.rgb ||
         !old.reachable) {
+      _storage.updateLamp(lamp);
       if (mounted) setState(() {});
     }
+  }
+
+  /// The lamp behind a single-lamp group, or null if it is gone (deleted while
+  /// a dialog or screen for it was open).
+  Lamp? _singleLamp(LampGroup group) {
+    if (group.lampIds.isEmpty) return null;
+    final id = group.lampIds.first;
+    for (final lamp in _lamps) {
+      if (lamp.id == id) return lamp;
+    }
+    return null;
   }
 
   /// The control connection to a lamp went up or down.
@@ -258,10 +272,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _refresh() async {
     await _startDiscovery();
 
-    // lastSeen wird automatisch durch Discovery aktualisiert
-    // Alte Lampen werden durch isOffline Getter automatisch erkannt
-
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   /// Create new group
@@ -282,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       _groups.add(group);
       await _storage.updateGroup(group);
-      setState(() {});
+      if (mounted) setState(() {});
     }
   }
 
@@ -292,6 +303,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         _lamps.where((l) => group.lampIds.contains(l.id)).toList();
 
     if (groupLamps.isEmpty) return;
+
+    final single = group.type == GroupType.single ? groupLamps.first : null;
+    if (single != null && single.supportedMethods.contains('toggle')) {
+      await _toggleLamp(single);
+      return;
+    }
 
     // Base the target on every lamp, including ones we currently believe are
     // unreachable: the user can see the lamp and knows what it is doing even
@@ -342,11 +359,38 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (mounted) setState(() {});
   }
 
+  /// Switch a single lamp with the lamp's own `toggle` command.
+  ///
+  /// Right after app start the shown state may still be the stored one, and a
+  /// lamp switched at the wall or from another app in the meantime is no longer
+  /// in it. `set_power` with a target derived from that would do nothing on the
+  /// first tap; `toggle` flips whatever state the lamp is really in, so the tap
+  /// works at once. The lamp then reports its new state in a notification.
+  Future<void> _toggleLamp(Lamp lamp) async {
+    void setPower(bool power, {bool? reachable}) {
+      final index = _lamps.indexWhere((l) => l.id == lamp.id);
+      if (index < 0) return;
+      _lamps[index] =
+          _lamps[index].copyWith(power: power, reachable: reachable);
+    }
+
+    // Optimistic flip of what is shown; corrected by the lamp's notification
+    // if the shown state was stale.
+    setState(() => setPower(!lamp.power));
+
+    final ok = await _yeelightService.toggle(lamp.ip);
+    if (!ok) {
+      setPower(lamp.power, reachable: false); // revert the optimistic flip
+    }
+    if (mounted) setState(() {});
+  }
+
   /// Edit group (settings)
   void _editGroup(LampGroup group) async {
     if (group.type == GroupType.single) {
       // For single lamps: check if brightness/color temp supported
-      final lamp = _lamps.firstWhere((l) => l.id == group.lampIds.first);
+      final lamp = _singleLamp(group);
+      if (lamp == null) return;
 
       if (lamp.supportsColorTemp || lamp.supportsRgb) {
         // Lamp supports extended settings -> Settings Screen
@@ -395,14 +439,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   /// Show lamp-specific settings
   void _showLampSettings(LampGroup group) async {
-    final lamp = _lamps.firstWhere((l) => l.id == group.lampIds.first);
+    final lamp = _singleLamp(group);
+    if (lamp == null) return;
 
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) => LampSettingsDialog(lamp: lamp),
     );
 
-    if (result != null) {
+    if (result != null && mounted) {
       // Update lamp
       final updatedLamp = lamp.copyWith(
         name: result['name'],
@@ -427,7 +472,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     String title, content;
 
     if (group.type == GroupType.single) {
-      final lamp = _lamps.firstWhere((l) => l.id == group.lampIds.first);
+      final lamp = _singleLamp(group);
+      if (lamp == null) return;
       title = l10n.deleteLampTitle;
       content = l10n.deleteLampConfirm(lamp.name);
     } else {
@@ -470,7 +516,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       // Regenerate system groups
       await _updateSystemGroups();
-      setState(() {});
+      if (mounted) setState(() {});
     }
   }
 
@@ -489,6 +535,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // Reload scenes after returning
     if (result == 'scenes_changed') {
       final scenes = await _storage.loadScenes();
+      if (!mounted) return;
       setState(() {
         _scenes = scenes;
       });
@@ -811,71 +858,82 @@ class EmptyState extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
-    return Center(
-      child: SingleChildScrollView(
+    // Scrollable across the full height, otherwise RefreshIndicator only reacts
+    // to a drag that starts on the (small, centered) content itself - and the
+    // text right here tells the user to pull down.
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.lightbulb_outline,
-              size: 80,
-              color: Colors.grey,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              l10n.noLampsFound,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.pullToRefresh,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest
-                    .withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: (constraints.maxHeight - 48).clamp(0, double.infinity),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.lightbulb_outline,
+                  size: 80,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  l10n.noLampsFound,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.pullToRefresh,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 20,
-                        color: theme.colorScheme.primary,
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 20,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            l10n.setup,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(height: 12),
                       Text(
-                        'Setup',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                        l10n.setupLanControl,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          height: 1.5,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    l10n.setupLanControl,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

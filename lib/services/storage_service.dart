@@ -30,119 +30,103 @@ class StorageService {
     return _prefs!;
   }
 
+  /// Decode a stored JSON list. A damaged entry (or a format this version
+  /// cannot read) is logged and yields an empty list instead of an exception
+  /// that would leave the app stuck on startup.
+  ///
+  /// Synchronous on purpose, like [_writeList]: the update/delete helpers
+  /// read, modify and write without an `await` in between. With one, two
+  /// concurrent updates (e.g. several lamps discovered at once) would each
+  /// start from the old list and the second write would drop the first lamp.
+  List<T> _readList<T>(String key, T Function(Map<String, dynamic>) fromJson) {
+    final json = prefs.getString(key);
+    if (json == null) return [];
+    try {
+      final data = jsonDecode(json) as List<dynamic>;
+      return data
+          .map((item) => fromJson(Map<String, dynamic>.from(item as Map)))
+          .toList();
+    } catch (e) {
+      developer.log('Could not read "$key": $e', name: 'storage');
+      return [];
+    }
+  }
+
+  /// setString updates the in-memory cache before it returns; only the write
+  /// to disk is asynchronous.
+  Future<void> _writeList(String key, List<Map<String, dynamic>> data) {
+    return prefs.setString(key, jsonEncode(data));
+  }
+
+  /// Replace the entry with the same id, or append it.
+  Future<void> _upsert<T>(
+    String key,
+    T item,
+    T Function(Map<String, dynamic>) fromJson,
+    String Function(T) idOf,
+    Map<String, dynamic> Function(T) toJson,
+  ) {
+    final items = _readList(key, fromJson);
+    final index = items.indexWhere((i) => idOf(i) == idOf(item));
+    if (index >= 0) {
+      items[index] = item;
+    } else {
+      items.add(item);
+    }
+    return _writeList(key, items.map(toJson).toList());
+  }
+
+  Future<void> _remove<T>(
+    String key,
+    String id,
+    T Function(Map<String, dynamic>) fromJson,
+    String Function(T) idOf,
+    Map<String, dynamic> Function(T) toJson,
+  ) {
+    final items = _readList(key, fromJson)..removeWhere((i) => idOf(i) == id);
+    return _writeList(key, items.map(toJson).toList());
+  }
+
   // === LAMPS ===
 
-  /// Load all lamps
-  Future<List<Lamp>> loadLamps() async {
-    final json = prefs.getString(_keyLamps);
-    if (json == null) return [];
+  Future<List<Lamp>> loadLamps() async => _readList(_keyLamps, Lamp.fromJson);
 
-    final List<dynamic> data = jsonDecode(json);
-    return data.map((item) => Lamp.fromJson(item)).toList();
-  }
+  Future<void> saveLamps(List<Lamp> lamps) =>
+      _writeList(_keyLamps, lamps.map((l) => l.toJson()).toList());
 
-  /// Save lamps
-  Future<void> saveLamps(List<Lamp> lamps) async {
-    final data = lamps.map((lamp) => lamp.toJson()).toList();
-    await prefs.setString(_keyLamps, jsonEncode(data));
-  }
+  Future<void> updateLamp(Lamp lamp) => _upsert<Lamp>(
+      _keyLamps, lamp, Lamp.fromJson, (l) => l.id, (l) => l.toJson());
 
-  /// Update single lamp
-  Future<void> updateLamp(Lamp lamp) async {
-    final lamps = await loadLamps();
-    final index = lamps.indexWhere((l) => l.id == lamp.id);
-
-    if (index >= 0) {
-      lamps[index] = lamp;
-    } else {
-      lamps.add(lamp);
-    }
-
-    await saveLamps(lamps);
-  }
-
-  /// Delete lamp
-  Future<void> deleteLamp(String lampId) async {
-    final lamps = await loadLamps();
-    lamps.removeWhere((l) => l.id == lampId);
-    await saveLamps(lamps);
-  }
+  Future<void> deleteLamp(String lampId) => _remove<Lamp>(
+      _keyLamps, lampId, Lamp.fromJson, (l) => l.id, (l) => l.toJson());
 
   // === GROUPS ===
 
-  /// Load all groups
-  Future<List<LampGroup>> loadGroups() async {
-    final json = prefs.getString(_keyGroups);
-    if (json == null) return [];
+  Future<List<LampGroup>> loadGroups() async =>
+      _readList(_keyGroups, LampGroup.fromJson);
 
-    final List<dynamic> data = jsonDecode(json);
-    return data.map((item) => LampGroup.fromJson(item)).toList();
-  }
+  Future<void> saveGroups(List<LampGroup> groups) =>
+      _writeList(_keyGroups, groups.map((g) => g.toJson()).toList());
 
-  /// Save groups
-  Future<void> saveGroups(List<LampGroup> groups) async {
-    final data = groups.map((group) => group.toJson()).toList();
-    await prefs.setString(_keyGroups, jsonEncode(data));
-  }
+  Future<void> updateGroup(LampGroup group) => _upsert<LampGroup>(
+      _keyGroups, group, LampGroup.fromJson, (g) => g.id, (g) => g.toJson());
 
-  /// Update single group
-  Future<void> updateGroup(LampGroup group) async {
-    final groups = await loadGroups();
-    final index = groups.indexWhere((g) => g.id == group.id);
-
-    if (index >= 0) {
-      groups[index] = group;
-    } else {
-      groups.add(group);
-    }
-
-    await saveGroups(groups);
-  }
-
-  /// Delete group
-  Future<void> deleteGroup(String groupId) async {
-    final groups = await loadGroups();
-    groups.removeWhere((g) => g.id == groupId);
-    await saveGroups(groups);
-  }
+  Future<void> deleteGroup(String groupId) => _remove<LampGroup>(
+      _keyGroups, groupId, LampGroup.fromJson, (g) => g.id, (g) => g.toJson());
 
   // === SCENES (GLOBAL) ===
 
-  /// Load all scenes
-  Future<List<Scene>> loadScenes() async {
-    final json = prefs.getString(_keyScenes);
-    if (json == null) return [];
+  Future<List<Scene>> loadScenes() async =>
+      _readList(_keyScenes, Scene.fromJson);
 
-    final List<dynamic> data = jsonDecode(json);
-    return data.map((item) => Scene.fromJson(item)).toList();
-  }
+  Future<void> saveScenes(List<Scene> scenes) =>
+      _writeList(_keyScenes, scenes.map((s) => s.toJson()).toList());
 
-  /// Save scenes
-  Future<void> saveScenes(List<Scene> scenes) async {
-    final data = scenes.map((scene) => scene.toJson()).toList();
-    await prefs.setString(_keyScenes, jsonEncode(data));
-  }
+  Future<void> updateScene(Scene scene) => _upsert<Scene>(
+      _keyScenes, scene, Scene.fromJson, (s) => s.id, (s) => s.toJson());
 
-  /// Update single scene
-  Future<void> updateScene(Scene scene) async {
-    final scenes = await loadScenes();
-    final index = scenes.indexWhere((s) => s.id == scene.id);
-
-    if (index >= 0) {
-      scenes[index] = scene;
-    } else {
-      scenes.add(scene);
-    }
-
-    await saveScenes(scenes);
-  }
-
-  /// Delete scene
-  Future<void> deleteScene(String sceneId) async {
-    final scenes = await loadScenes();
-    scenes.removeWhere((s) => s.id == sceneId);
-    await saveScenes(scenes);
-  }
+  Future<void> deleteScene(String sceneId) => _remove<Scene>(
+      _keyScenes, sceneId, Scene.fromJson, (s) => s.id, (s) => s.toJson());
 
   /// Filter scenes applicable to a group
   Future<List<Scene>> getScenesForGroup(List<Lamp> groupLamps) async {
@@ -157,23 +141,27 @@ class StorageService {
   /// Save last settings for a group
   Future<void> saveLastSettings(
       String groupId, Map<String, dynamic> settings) async {
-    final allSettings = await _loadAllLastSettings();
+    final allSettings = _loadAllLastSettings();
     allSettings[groupId] = settings;
     await prefs.setString(_keyLastSettings, jsonEncode(allSettings));
   }
 
   /// Load last settings for a group
   Future<Map<String, dynamic>?> loadLastSettings(String groupId) async {
-    final allSettings = await _loadAllLastSettings();
-    return allSettings[groupId];
+    final settings = _loadAllLastSettings()[groupId];
+    return settings is Map ? Map<String, dynamic>.from(settings) : null;
   }
 
   /// Load all last settings (private)
-  Future<Map<String, dynamic>> _loadAllLastSettings() async {
+  Map<String, dynamic> _loadAllLastSettings() {
     final json = prefs.getString(_keyLastSettings);
     if (json == null) return {};
-
-    return Map<String, dynamic>.from(jsonDecode(json));
+    try {
+      return Map<String, dynamic>.from(jsonDecode(json) as Map);
+    } catch (e) {
+      developer.log('Could not read last settings: $e', name: 'storage');
+      return {};
+    }
   }
 
   // === HELPER METHODS ===

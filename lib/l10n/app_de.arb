@@ -32,6 +32,7 @@
   "deleteGroup": "Gruppe löschen",
   "noLampsFound": "Keine Lampen gefunden",
   "pullToRefresh": "Ziehe nach unten um zu aktualisieren",
+  "setup": "Einrichtung",
   "setupLanControl": "Stelle sicher:\n\n1. Deine Yeelight-Lampen sind eingeschaltet\n2. LAN-Steuerung ist in der Yeelight-App aktiviert:\n   • Öffne die Yeelight-App\n   • Wähle deine Lampe\n   • Tippe auf das Zahnrad (Einstellungen)\n   • Aktiviere 'LAN-Steuerung'\n3. Dein Gerät ist im selben WLAN-Netzwerk",
   "noLampsOnline": "Keine Lampen online",
   "ensureLampsReachable": "Stelle sicher, dass deine Lampen\nerreichbar sind.",
