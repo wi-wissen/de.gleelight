@@ -1,7 +1,7 @@
 name: gleelight
 description: A minimal Flutter app for local Yeelight control without cloud connection.
 publish_to: 'none'
-version: 1.0.2+3
+version: 1.0.3+4
 
 environment:
   sdk: '>=3.6.0 <4.0.0'
